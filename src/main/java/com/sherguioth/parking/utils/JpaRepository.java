@@ -6,16 +6,15 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.util.List;
 
-public class JpaRepository<T> implements GenericRepository<T> {
+public class JpaRepository<T, ID> implements GenericRepository<T, ID> {
 
     protected EntityManager entityManager;
-    private final Class<T> type;
+    private final Class<T> entityClass;
 
-    public EntityManager getEntityManager() {
-        return entityManager;
+    public JpaRepository(Class<T> entityClass) {
+        this.entityClass = entityClass;
     }
 
     @PersistenceContext
@@ -23,38 +22,40 @@ public class JpaRepository<T> implements GenericRepository<T> {
         this.entityManager = entityManager;
     }
 
-    public JpaRepository() {
-        Type t = getClass().getGenericSuperclass();
-        ParameterizedType parameterizedType = (ParameterizedType) t;
-        type = (Class) parameterizedType.getActualTypeArguments()[0];
+    @Override
+    public T find(final ID id) {
+        return entityManager.find(entityClass, id);
     }
 
     @Override
-    public T create(final T t) {
+    public T save(final T t) {
+        entityManager.getTransaction().begin();
         entityManager.persist(t);
+        entityManager.getTransaction().commit();
         return t;
     }
 
     @Override
+    public T update(T t) {
+        entityManager.getTransaction().begin();
+        t = entityManager.merge(t);
+        entityManager.getTransaction().commit();
+        return t;
+
+    }
+
+    @Override
     public void delete(final Object objet) {
+        entityManager.getTransaction().begin();
         entityManager.remove(entityManager.merge(objet));
+        entityManager.getTransaction().commit();
     }
 
     @Override
-    public T find(final Object id) {
-        return entityManager.find(type, id);
-    }
-
-    @Override
-    public T update(final T t) {
-        return entityManager.merge(t);
-    }
-
-    @Override
-    public Iterable<T> findAll() {
+    public List<T> findAll() {
         CriteriaBuilder cb = this.entityManager.getCriteriaBuilder();
-        CriteriaQuery<T> criteriaQuery = cb.createQuery(type);
-        Root<T> root = criteriaQuery.from(type);
+        CriteriaQuery<T> criteriaQuery = cb.createQuery(entityClass);
+        Root<T> root = criteriaQuery.from(entityClass);
         criteriaQuery.select(root);
         TypedQuery<T> query = entityManager.createQuery(criteriaQuery);
         return query.getResultList();

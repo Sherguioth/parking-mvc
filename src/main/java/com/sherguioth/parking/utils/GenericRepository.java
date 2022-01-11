@@ -1,12 +1,12 @@
 package com.sherguioth.parking.utils;
 
-public interface GenericRepository<T> {
+public interface GenericRepository<T, ID> {
 
-    T create(T t);
+    T save(T t);
 
     void delete(T t);
 
-    T find(T t);
+    T find(ID id);
 
     T update(T t);
 

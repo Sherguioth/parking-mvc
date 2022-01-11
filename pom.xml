@@ -106,9 +106,6 @@
         									<goal>compile</goal>
         								</goals>
         							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
         						</pluginExecution>
         					</pluginExecutions>
         				</lifecycleMappingMetadata>
